@@ -57,7 +57,7 @@ def main ():
 
     if add_selectbox == 'Online':
         Age = st.text_input('Age')
-        Salary = st.text_input('Salary(it is in dollar and the amount the client want to use to buy the phone,Whether monthly or yearly)')
+        Salary = st.text_input('Salary(USD/Annum)')
         Gender = st.selectbox('Gender', ["Male","Female"])
 
         output=""
