@@ -1,3 +1,8 @@
 
-#pycaret==1.0.0
+numpy>=1.9.2
+scipy>=0.15.1
+scikit-learn>=0.18
+matplotlib>=1.4.3
+pandas>=0.19
+joblib
 streamlit
