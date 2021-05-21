@@ -69,7 +69,9 @@ def main ():
 
 
     if add_selectbox == 'Batch':
-        file_upload = st.file_uploader("Upload csv file for predictions", type="csv",encoding =None, key = 'a')
+        st.set_option('deprecation.showfileUploaderEncoding', False)
+        file_upload = st.file_uploader("Upload csv file for predictions", type="csv")
+
 
 
 
@@ -81,13 +83,13 @@ def main ():
             data['Gender']= data['Gender'].map({'Male':0, 'Female':1})
             data=data.drop('Purchase Iphone',axis=1)
 
-            predictions = cv.predict(data)
+            prediction = cv.predict(data)
 
 
 
 
 
-            st.write(predictions)
+            st.write(prediction)
 
 
 
