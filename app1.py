@@ -83,13 +83,13 @@ def main ():
             data['Gender']= data['Gender'].map({'Male':0, 'Female':1})
             data=data.drop('Purchase Iphone',axis=1)
 
-            prediction = cv.predict(data)
+            predictions = cv.predict(data)
 
 
 
 
 
-            st.write(prediction)
+            st.write(predictions)
 
 
 
