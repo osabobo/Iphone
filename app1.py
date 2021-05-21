@@ -7,7 +7,7 @@ from sklearn.preprocessing import LabelEncoder
 cv_model = open('predictions.pkl', 'rb')
 cv = joblib.load(cv_model)
 
-def predictions(Gender,Age,Salary):
+def prediction(Gender,Age,Salary):
     if Gender == "Male":
         Gender = 0
     else:
@@ -58,7 +58,7 @@ def main ():
 
 
         if st.button("Predict"):
-            result = predictions(Gender, Age,Salary)
+            result = prediction(Gender, Age,Salary)
             st.success(result)
 
 
