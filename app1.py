@@ -33,7 +33,7 @@ def main():
     # App header
     image = Image.open('logo.jpg')
     image_spam = Image.open('images.jpg')
-    st.image(image, use_column_width=False)
+    st.image(image,  use_container_width=False)
 
     st.sidebar.info('This app predicts whether a person will buy an iPhone.')
     st.sidebar.image(image_spam)
