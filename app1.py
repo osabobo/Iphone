@@ -21,7 +21,7 @@ def groq_prediction(Gender, Age, Salary):
     """
 
     response = client.chat.completions.create(
-        model="mixtral-8x7b-32768",  # You can change to "llama3-70b-8192" if preferred
+        model="llama-3.3-70b-versatile",  # You can change to "llama3-70b-8192" if preferred
         messages=[{"role": "user", "content": prompt}]
     )
 
