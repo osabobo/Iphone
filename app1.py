@@ -6,8 +6,11 @@ import streamlit as st
 from sklearn.preprocessing import LabelEncoder 
 cv_model = open('predictions.pkl', 'rb') 
 cv = joblib.load(cv_model)
-def prediction(Gender,Age,Salary): if Gender == "Male": Gender = 0 else: Gender = 1
-Age=Age
+def prediction(Gender,Age,Salary): 
+      if Gender == "Male": 
+          Gender = 0 
+      else: Gender = 1
+ Age=Age
 
 Salary=Salary
  # Making predictions
