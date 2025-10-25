@@ -1,6 +1,7 @@
 import numpy as np 
 import pandas as pd 
-import joblib import os 
+import joblib 
+import os 
 import streamlit as st 
 from sklearn.preprocessing import LabelEncoder 
 cv_model = open('predictions.pkl', 'rb') 
