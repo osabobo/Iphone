@@ -4,94 +4,84 @@ import joblib
 import os
 import streamlit as st
 from sklearn.preprocessing import LabelEncoder
-cv_model = open('predictions.pkl', 'rb')
-cv = joblib.load(cv_model)
+import sklearn
+from PIL import Image
 
-def prediction(Gender,Age,Salary):
-    if Gender == "Male":
-        Gender = 0
-    else:
-        Gender = 1
+# --- Safe model loading with version compatibility check ---
+MODEL_PATH = 'predictions.pkl'
 
-    Age=Age
+def load_model(model_path=MODEL_PATH):
+    try:
+        with open(model_path, 'rb') as f:
+            model = joblib.load(f)
+        st.sidebar.success(f"✅ Model loaded successfully (scikit-learn {sklearn.__version__})")
+        return model
+    except Exception as e:
+        st.sidebar.error("❌ Failed to load model.")
+        st.sidebar.warning(
+            f"Possible version mismatch:\n\n"
+            f"- Installed scikit-learn: {sklearn.__version__}\n"
+            f"- Error: {str(e)}\n\n"
+            f"💡 Try reinstalling the same scikit-learn version used during training "
+            f"or retrain and resave your model using this version."
+        )
+        st.stop()
 
-    Salary=Salary
-     # Making predictions
+cv = load_model()
 
-    prediction = cv.predict(
-        [[Gender,Age,Salary]])
-    if prediction == 0:
-        pred = 'No'
-    else:
-        pred = 'Yes'
-    return pred
+# --- Prediction function ---
+def prediction(Gender, Age, Salary):
+    try:
+        Gender = 0 if Gender == "Male" else 1
+        Age = float(Age)
+        Salary = float(Salary)
+        pred = cv.predict([[Gender, Age, Salary]])
+        return 'Yes' if pred[0] == 1 else 'No'
+    except Exception as e:
+        st.error(f"Prediction failed: {e}")
+        return None
 
-def main ():
-    from PIL import Image
+# --- Streamlit main app ---
+def main():
     image = Image.open('logo.jpg')
     image_spam = Image.open('images.jpg')
-    st.image(image,use_column_width=False)
 
-    add_selectbox = st.sidebar.selectbox(
-    "How would you like to predict?",
-    ("Online", "Batch"))
-
-    st.sidebar.info('This app is created to predict whether to buy iphone or Not')
-
-
+    st.image(image, use_column_width=False)
     st.sidebar.image(image_spam)
+    st.sidebar.info('This app predicts whether a person will buy an iPhone or not.')
 
+    mode = st.sidebar.selectbox("Choose Prediction Mode", ("Online", "Batch"))
 
+    st.title("📱 iPhone Purchase Prediction App")
 
-
-
-    st.title("Iphone Prediction App")
-
-    if add_selectbox == 'Online':
+    if mode == 'Online':
+        Gender = st.selectbox('Gender', ["Male", "Female"])
         Age = st.text_input('Age')
-        Salary = st.text_input('Salary(USD/Annum)')
-        Gender = st.selectbox('Gender', ["Male","Female"])
-
-        result=""
-
-
-
+        Salary = st.text_input('Salary (USD/Annum)')
 
         if st.button("Predict"):
-            result = prediction(Gender, Age,Salary)
-            st.success(result)
+            result = prediction(Gender, Age, Salary)
+            if result:
+                st.success(f"Prediction: {result}")
 
-
-
-
-
-
-
-
-    if add_selectbox == 'Batch':
+    elif mode == 'Batch':
         st.set_option('deprecation.showfileUploaderEncoding', False)
-        file_upload = st.file_uploader("Upload csv file for predictions", type="csv")
+        uploaded_file = st.file_uploader("Upload CSV file for batch predictions", type="csv")
 
+        st.info('Ensure your CSV matches the format of `iphone.csv` before uploading.')
 
+        if uploaded_file is not None:
+            try:
+                data = pd.read_csv(uploaded_file)
+                data['Gender'] = data['Gender'].map({'Male': 0, 'Female': 1})
+                if 'Purchase Iphone' in data.columns:
+                    data = data.drop('Purchase Iphone', axis=1)
 
-
-
-        st.title('Make sure the csv File is in the same format  as iphone.csv before uploading to avoid Error')
-
-        if file_upload is not None:
-            data = pd.read_csv(file_upload)
-            data['Gender']= data['Gender'].map({'Male':0, 'Female':1})
-            data=data.drop('Purchase Iphone',axis=1)
-
-            predictions = cv.predict(data)
-
-
-
-
-
-            st.write(predictions)
-
-
+                predictions = cv.predict(data)
+                data['Prediction'] = np.where(predictions == 1, 'Yes', 'No')
+                st.write(data)
+            except Exception as e:
+                st.error(f"Batch prediction failed: {e}")
 
 if __name__ == '__main__':
     main()
