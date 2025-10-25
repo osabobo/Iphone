@@ -1,97 +1,92 @@
-import numpy as np
-import pandas as pd
-import joblib
-import os
 import streamlit as st
-from sklearn.preprocessing import LabelEncoder
-cv_model = open('predictions.pkl', 'rb')
-cv = joblib.load(cv_model)
+import pandas as pd
+from groq import Groq
+from PIL import Image
 
-def prediction(Gender,Age,Salary):
-    if Gender == "Male":
-        Gender = 0
-    else:
-        Gender = 1
+# Initialize Groq client (ensure you set your GROQ_API_KEY as an environment variable)
+client = Groq(api_key=st.secrets["GROQ_API_KEY"] if "GROQ_API_KEY" in st.secrets else None)
 
-    Age=Age
+def groq_prediction(Gender, Age, Salary):
+    """
+    Use a Groq large language model to predict if a person will buy an iPhone.
+    """
+    prompt = f"""
+    You are an expert marketing data analyst.
+    Predict whether a person will buy an iPhone based on the following details:
+    - Gender: {Gender}
+    - Age: {Age}
+    - Salary: ${Salary}
 
-    Salary=Salary
-     # Making predictions
+    Respond only with one word: 'Yes' or 'No'.
+    """
 
-    prediction = cv.predict(
-        [[Gender,Age,Salary]])
-    if prediction == 0:
-        pred = 'No'
-    else:
-        pred = 'Yes'
-    return pred
+    response = client.chat.completions.create(
+        model="mixtral-8x7b-32768",  # You can change to "llama3-70b-8192" if preferred
+        messages=[{"role": "user", "content": prompt}]
+    )
 
-def main ():
-    from PIL import Image
+    prediction = response.choices[0].message.content.strip()
+    return prediction
+
+
+def main():
+    # App header
     image = Image.open('logo.jpg')
     image_spam = Image.open('images.jpg')
-    st.image(image,use_column_width=False)
+    st.image(image, use_column_width=False)
 
-    add_selectbox = st.sidebar.selectbox(
-    "How would you like to predict?",
-    ("Online", "Batch"))
-
-    st.sidebar.info('This app is created to predict whether to buy iphone or Not')
-
-
+    st.sidebar.info('This app predicts whether a person will buy an iPhone.')
     st.sidebar.image(image_spam)
 
+    st.title("📱 iPhone Purchase Prediction App (Powered by Groq LLM)")
 
+    # Sidebar selection
+    add_selectbox = st.sidebar.selectbox(
+        "How would you like to predict?",
+        ("Online", "Batch")
+    )
 
-
-
-    st.title("Iphone Prediction App")
-
+    # Online Prediction
     if add_selectbox == 'Online':
-        Age = st.text_input('Age')
-        Salary = st.text_input('Salary(USD/Annum)')
-        Gender = st.selectbox('Gender', ["Male","Female"])
-
-        result=""
-
-
-
+        Age = st.number_input('Age', min_value=10, max_value=100, step=1)
+        Salary = st.number_input('Salary (USD/Annum)', min_value=0)
+        Gender = st.selectbox('Gender', ["Male", "Female"])
 
         if st.button("Predict"):
-            result = prediction(Gender, Age,Salary)
-            st.success(result)
+            with st.spinner("🔍 Asking Groq model for prediction..."):
+                result = groq_prediction(Gender, Age, Salary)
+            st.success(f"Prediction: {result}")
 
-
-
-
-
-
-
-
-    if add_selectbox == 'Batch':
-        st.set_option('deprecation.showfileUploaderEncoding', False)
-        file_upload = st.file_uploader("Upload csv file for predictions", type="csv")
-
-
-
-
-
-        st.title('Make sure the csv File is in the same format  as iphone.csv before uploading to avoid Error')
+    # Batch Prediction
+    elif add_selectbox == 'Batch':
+        file_upload = st.file_uploader("📂 Upload CSV file for predictions", type="csv")
+        st.info("Ensure the CSV file has columns: Gender, Age, Salary")
 
         if file_upload is not None:
             data = pd.read_csv(file_upload)
-            data['Gender']= data['Gender'].map({'Male':0, 'Female':1})
-            data=data.drop('Purchase Iphone',axis=1)
+            st.write("Uploaded Data Preview:")
+            st.dataframe(data.head())
 
-            predictions = cv.predict(data)
+            results = []
+            with st.spinner("Generating predictions with Groq..."):
+                for _, row in data.iterrows():
+                    pred = groq_prediction(row['Gender'], row['Age'], row['Salary'])
+                    results.append(pred)
 
+            data['Predicted_Purchase'] = results
+            st.success("✅ Predictions complete!")
+            st.dataframe(data)
 
-
-
-
-            st.write(predictions)
-
+            # Allow user to download results
+            csv = data.to_csv(index=False).encode('utf-8')
+            st.download_button(
+                label="Download Predictions as CSV",
+                data=csv,
+                file_name='iphone_predictions.csv',
+                mime='text/csv'
+            )
 
 
 if __name__ == '__main__':
     main()
+
