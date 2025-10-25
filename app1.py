@@ -38,7 +38,7 @@ def main():
     st.sidebar.info('This app predicts whether a person will buy an iPhone.')
     st.sidebar.image(image_spam)
 
-    st.title("📱 iPhone Purchase Prediction App)
+    st.title("📱 iPhone Purchase Prediction App")
 
     # Sidebar selection
     add_selectbox = st.sidebar.selectbox(
